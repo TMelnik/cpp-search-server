@@ -66,7 +66,7 @@ enum class DocumentStatus {
 
 class SearchServer {
 public:
-  bool isWrongString(const string s){
+  bool isWrongString(const string s) const{
     for(auto ch:s){
         if(ch >= 0 && ch <=31){
             return true;
@@ -241,9 +241,6 @@ public:
     Query ParseQuery(const string& text) const {
         Query query;
 
-        // Без понятия почему код теперь не рабочий, ведь я выполнила все ваши поправки к коду.
-        // Ошибку которую теперь выдает на 2 строки ниже я не понимаю.
-        // А наличие скобок в коде в одну строку, считаю лишним нагромождением. При всем моем уважении к вам, наставник)
         if(isWrongString(text)){
             throw invalid_argument("invalid argument"s);
         }

@@ -66,21 +66,23 @@ enum class DocumentStatus {
 
 class SearchServer {
 public:
+  bool isWrongString(const string s){
+    for(auto ch:s){
+        if(ch >= 0 && ch <=31){
+            return true;
+    return false;
+  }
+
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
             for(auto s:stop_words_)
-                for(auto ch:s)
-                    if(ch >= 0 && ch <=31)
-                        throw invalid_argument("invalid argument"s);
+              if(isWrongString(s))
+                  throw invalid_argument("invalid argument"s);
     }
 
     explicit SearchServer(const string& stop_words_text)
-        : SearchServer(SplitIntoWords(stop_words_text)){
-            for(auto ch:stop_words_text)
-                if(ch >= 0 && ch <=31)
-                    throw invalid_argument("invalid argument"s);
-    }
+        : SearchServer(SplitIntoWords(stop_words_text)){}
 
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
@@ -88,10 +90,8 @@ public:
              throw invalid_argument("invalid argument"s);
         }
 
-        for(auto ch:document)
-                if(ch >= 0 && ch <=31)
-                    throw invalid_argument("invalid argument"s);
-
+        if(isWrongString(document))
+            throw invalid_argument("invalid argument"s);
         vector<string> words = SplitIntoWordsNoStop(document);
 
         const double inv_word_count = 1.0 / words.size();
@@ -107,16 +107,6 @@ public:
     vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
         vector<Document> result;
         Query query = ParseQuery(raw_query);
-
-        for(int i = 0; i< raw_query.size(); ++i){
-            if(raw_query[i] >= 0 && raw_query[i] <=31)
-                throw invalid_argument("invalid argument"s);
-            if(raw_query[i] == '-')
-                if(i == 0 || raw_query[i-1] == ' ')
-                    if((((i+1) != raw_query.size()) && (raw_query[i+1] == '-')) || i+1 == raw_query.size() )
-                       throw invalid_argument("invalid argument"s);
-        }
-
         auto matched_documents = FindAllDocuments(query, document_predicate);
 
         sort(matched_documents.begin(), matched_documents.end(), [](const Document& lhs, const Document& rhs) {
@@ -162,15 +152,6 @@ public:
 
         tuple<vector<string>, DocumentStatus> result;
         Query query = ParseQuery(raw_query);
-
-        for(int i = 0; i< raw_query.size(); ++i){
-            if(raw_query[i] >= 0 && raw_query[i] <=31)
-                throw invalid_argument("invalid argument"s);
-            if(raw_query[i] == '-')
-                if(i == 0 || raw_query[i-1] == ' ')
-                    if((((i+1) != raw_query.size()) && (raw_query[i+1] == '-')) || i+1 == raw_query.size() )
-                        throw invalid_argument("invalid argument"s);
-        }
 
         vector<string> matched_words;
         for (const string& word : query.plus_words) {
@@ -255,6 +236,20 @@ public:
 
     Query ParseQuery(const string& text) const {
         Query query;
+
+        if(isWrongString(text))
+            throw invalid_argument("invalid argument"s);
+
+        for(int i = 0; i< text.size(); ++i){
+            if(text[i] == '-'){
+                if(i == 0 || text[i-1] == ' '){
+                    if((((i+1) != text.size()) && (text[i+1] == '-')) || i+1 == text.size() ){
+                       throw invalid_argument("invalid argument"s);
+                     }
+                   }
+                 }
+        }
+
         for (const string& word : SplitIntoWords(text)) {
             const QueryWord query_word = ParseQueryWord(word)
 ;

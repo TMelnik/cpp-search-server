@@ -70,15 +70,19 @@ public:
     for(auto ch:s){
         if(ch >= 0 && ch <=31){
             return true;
+        }
+    }
     return false;
   }
 
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
-            for(auto s:stop_words_)
-              if(isWrongString(s))
+            for(auto s:stop_words_){
+              if(isWrongString(s)){
                   throw invalid_argument("invalid argument"s);
+              }
+            }
     }
 
     explicit SearchServer(const string& stop_words_text)
@@ -237,24 +241,29 @@ public:
     Query ParseQuery(const string& text) const {
         Query query;
 
-        if(isWrongString(text))
+        // Без понятия почему код теперь не рабочий, ведь я выполнила все ваши поправки к коду.
+        // Ошибку которую теперь выдает на 2 строки ниже я не понимаю.
+        // А наличие скобок в коде в одну строку, считаю лишним нагромождением. При всем моем уважении к вам, наставник)
+        if(isWrongString(text)){
             throw invalid_argument("invalid argument"s);
+        }
 
         for(int i = 0; i< text.size(); ++i){
             if(text[i] == '-'){
                 if(i == 0 || text[i-1] == ' '){
                     if((((i+1) != text.size()) && (text[i+1] == '-')) || i+1 == text.size() ){
                        throw invalid_argument("invalid argument"s);
-                     }
-                   }
-                 }
+                    }
+                }
+            }
         }
 
         for (const string& word : SplitIntoWords(text)) {
-            const QueryWord query_word = ParseQueryWord(word)
-;
+
+            const QueryWord query_word = ParseQueryWord(word);
+
             if (!query_word.is_stop) {
-                if (query_word.is_minus) {
+                if (query_word.is_minus){
                     query.minus_words.insert(query_word.data);
                 } else {
                     query.plus_words.insert(query_word.data);
@@ -285,8 +294,7 @@ public:
         }
 
         for (const string& word : query.minus_words) {
-            if (word_to_document_freqs_.count(word)
- == 0) {
+            if (word_to_document_freqs_.count(word)== 0) {
                 continue;
             }
             for (const auto [document_id, _] : word_to_document_freqs_.at(word)) {

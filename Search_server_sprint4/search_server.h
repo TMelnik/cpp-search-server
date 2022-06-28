@@ -11,51 +11,26 @@ const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
 using namespace std;
 
+template <typename StringContainer>
+explicit SearchServer(const StringContainer& stop_words);
+
 class SearchServer {
 public:
     template <typename StringContainer>
-    explicit SearchServer(const StringContainer& stop_words)
-        : stop_words_(MakeUniqueNonEmptyStrings(stop_words))  
-    {
-        if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
-            throw invalid_argument("Some of stop words are invalid"s);
-        }
-    }
+    explicit SearchServer(const StringContainer& stop_words);
 
-    explicit SearchServer(const string& stop_words_text)
-        : SearchServer(SplitIntoWords(stop_words_text))  
-    {
-    }
+    explicit SearchServer(const string& stop_words_text);
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings);
-    
-    
+
+
     template <typename DocumentPredicate>
-    vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
-        const auto query = ParseQuery(raw_query);
-
-        auto matched_documents = FindAllDocuments(query, document_predicate);
-
-        sort(matched_documents.begin(), matched_documents.end(), [](const Document& lhs, const Document& rhs) {
-            if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
-                return lhs.rating > rhs.rating;
-            } else {
-                return lhs.relevance > rhs.relevance;
-            }
-        });
-        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
-            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
-        }
-
-        return matched_documents;
-    }
+    vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const;
 
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status) const;
-    
-    
-    vector<Document> FindTopDocuments(const string& raw_query) const {
-        return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
-    }
+
+
+    vector<Document> FindTopDocuments(const string& raw_query) const;
 
     int GetDocumentCount() const {
         return documents_.size();
@@ -77,30 +52,14 @@ private:
     map<int, DocumentData> documents_;
     vector<int> document_ids_;
 
-    bool IsStopWord(const string& word) const {
-        return stop_words_.count(word) > 0;
-    }
+    bool IsStopWord(const string& word) const;
 
-    static bool IsValidWord(const string& word) {
-      
-        return none_of(word.begin(), word.end(), [](char c) {
-            return c >= '\0' && c < ' ';
-        });
-    }
+    static bool IsValidWord(const string& word);
 
     vector<string> SplitIntoWordsNoStop(const string& text) const;
 
-    static int ComputeAverageRating(const vector<int>& ratings) {
-        if (ratings.empty()) {
-            return 0;
-        }
-        int rating_sum = 0;
-        for (const int rating : ratings) {
-            rating_sum += rating;
-        }
-        return rating_sum / static_cast<int>(ratings.size());
-    }
-    
+    static int ComputeAverageRating(const vector<int>& ratings);
+
     struct QueryWord {
         string data;
         bool is_minus;
@@ -116,7 +75,7 @@ private:
 
     Query ParseQuery(const string& text) const;
 
-    
+
     double ComputeWordInverseDocumentFreq(const string& word) const;
 
     template <typename DocumentPredicate>
@@ -151,3 +110,32 @@ private:
         return matched_documents;
     }
 };
+
+template <typename StringContainer>
+SearchServer::SearchServer(const StringContainer& stop_words)
+    : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
+{
+    if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
+        throw invalid_argument("Some of stop words are invalid"s);
+    }
+}
+
+template <typename DocumentPredicate>
+vector<Document> SearchServer::FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
+    const auto query = ParseQuery(raw_query);
+
+    auto matched_documents = FindAllDocuments(query, document_predicate);
+
+    sort(matched_documents.begin(), matched_documents.end(), [](const Document& lhs, const Document& rhs) {
+        if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+            return lhs.rating > rhs.rating;
+        } else {
+            return lhs.relevance > rhs.relevance;
+        }
+    });
+    if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
+        matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+    }
+
+    return matched_documents;
+}

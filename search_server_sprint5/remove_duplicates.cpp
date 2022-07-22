@@ -3,34 +3,28 @@
 #include "remove_duplicates.h"
 
 void RemoveDuplicates(SearchServer& search_server) {
-    
-    map<int, set<string>> document_to_word_freqs_;
-    auto it = search_server.word_to_document_freqs_.begin();
-    for(; it != search_server.word_to_document_freqs_.end(); ++it){
-        auto it2 = it->second.begin();
-        for(; it2 != it->second.end(); ++it2){
-            document_to_word_freqs_[it2->first].insert(it->first);
-        }
-    } 
-    
-    multimap<set<string>,int> mm;
-    auto it1 = document_to_word_freqs_.begin();
-    for(; it1 != document_to_word_freqs_.end(); ++it1){
-        mm.insert(pair<set<string>,int>(it1->second, it1->first));
-    }
-    
+
+    map<set<string>, int> document_to_word_freqs_;
     vector<int> id_del;
-    id_del.reserve(mm.size());
-    auto prev = mm.begin();
-    auto it3 = mm.begin();
-    it3++;
-    
-    for( ; it3!= mm.end(); it3++, prev++){
-        if(it3->first == prev->first){
-            id_del.push_back(it3->second);
+    id_del.reserve(search_server.document_ids_.size()-1);
+    int n;
+
+    for(int i = 0; i < search_server.document_ids_.size(); ++i){
+        auto it = search_server.word_to_document_freqs_.begin();
+        set<string> stmp;
+        for(; it != search_server.word_to_document_freqs_.end(); ++it){
+           if(it->second.count(search_server.document_ids_[i])){
+               stmp.insert(it->first);
+           }
+        }
+
+        n = document_to_word_freqs_.size();
+        document_to_word_freqs_.insert(pair<set<string>, int>(stmp, search_server.document_ids_[i]));
+        if(document_to_word_freqs_.size() == n){
+          id_del.push_back(search_server.document_ids_[i]);
         }
     }
-    
+
     for(int i = 0; i<id_del.size(); ++i){
         cout << "Found duplicate document id " << id_del[i] << endl;
         search_server.RemoveDocument(id_del[i]);

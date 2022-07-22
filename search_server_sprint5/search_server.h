@@ -15,9 +15,10 @@ using namespace std;
 class SearchServer {
 public:
     map<string, map<int, double>> word_to_document_freqs_;
+    vector<int> document_ids_;
     
     void RemoveDocument(int document_id);
-    
+
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words);
 
@@ -38,7 +39,7 @@ public:
     int GetDocumentCount() const {
         return documents_.size();
     }
-    
+
     const vector<int>::iterator begin(){
         return document_ids_.begin();
     };
@@ -55,8 +56,6 @@ private:
     };
     const set<string> stop_words_;
     map<int, DocumentData> documents_;
-    vector<int> document_ids_;
-    
 
     bool IsStopWord(const string& word) const;
 
@@ -65,7 +64,7 @@ private:
     vector<string> SplitIntoWordsNoStop(const string& text) const;
 
     static int ComputeAverageRating(const vector<int>& ratings);
-    
+
     const map<string, double>& GetWordFrequencies(int document_id) const;
 
     struct QueryWord {
